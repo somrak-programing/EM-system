@@ -1,0 +1,220 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleCode {
+  REQUESTER
+  SECTION_MANAGER
+  GM
+  EM_MANAGER
+  EM_TECHNICIAN
+  IT_MANAGER
+  IT_TECHNICIAN
+  ADMIN
+}
+
+enum TicketType {
+  MACHINE
+  ELECTRIC
+  STAFF
+  IT
+}
+
+enum TicketPriority {
+  NORMAL
+  URGENT
+}
+
+enum AttachmentKind {
+  REQUEST
+  RESULT
+}
+
+enum FormKind {
+  NONE
+  COMPLETE
+  REJECT
+}
+
+enum ActorScope {
+  ANY
+  REQUESTER
+  ASSIGNEE
+}
+
+model Role {
+  id    String   @id @default(uuid())
+  code  RoleCode @unique
+  name  String
+  users User[]
+}
+
+model Section {
+  id      String   @id @default(uuid())
+  code    String   @unique
+  name    String
+  users   User[]
+  tickets Ticket[]
+}
+
+model User {
+  id           String          @id @default(uuid())
+  username     String          @unique
+  passwordHash String
+  displayName  String
+  email        String?
+  phone        String?
+  active       Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  roleId       String
+  sectionId    String?
+  role         Role            @relation(fields: [roleId], references: [id])
+  section      Section?        @relation(fields: [sectionId], references: [id])
+  requested    Ticket[]        @relation("TicketRequester")
+  assigned     Ticket[]        @relation("TicketAssignee")
+  events       TicketEvent[]
+  comments     TicketComment[]
+}
+
+model Asset {
+  id         String   @id @default(uuid())
+  tag        String   @unique
+  name       String
+  line       String
+  isElectric Boolean  @default(false)
+  qrToken    String?  @unique
+  active     Boolean  @default(true)
+  tickets    Ticket[]
+}
+
+model Workflow {
+  id           String               @id @default(uuid())
+  type         TicketType           @unique
+  name         String
+  stages       WorkflowStage[]
+  transitions  WorkflowTransition[]
+}
+
+model WorkflowStage {
+  id              String               @id @default(uuid())
+  workflowId      String
+  code            String
+  name            String
+  sortOrder       Int
+  isInitial       Boolean              @default(false)
+  isTerminal      Boolean              @default(false)
+  workflow        Workflow             @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  fromTransitions WorkflowTransition[] @relation("FromStage")
+  toTransitions   WorkflowTransition[] @relation("ToStage")
+
+  @@unique([workflowId, code])
+}
+
+model WorkflowTransition {
+  id           String                    @id @default(uuid())
+  workflowId   String
+  fromStageId  String
+  toStageId    String
+  actionCode   String
+  actionLabel  String
+  formKind     FormKind                  @default(NONE)
+  assignOnTake Boolean                   @default(false)
+  actorScope   ActorScope                @default(ANY)
+  sortOrder    Int                       @default(0)
+  workflow     Workflow                  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  fromStage    WorkflowStage             @relation("FromStage", fields: [fromStageId], references: [id])
+  toStage      WorkflowStage             @relation("ToStage", fields: [toStageId], references: [id])
+  roles        WorkflowTransitionRole[]
+
+  @@unique([fromStageId, actionCode])
+}
+
+model WorkflowTransitionRole {
+  id           String             @id @default(uuid())
+  transitionId String
+  roleCode     RoleCode
+  transition   WorkflowTransition @relation(fields: [transitionId], references: [id], onDelete: Cascade)
+
+  @@unique([transitionId, roleCode])
+}
+
+model Ticket {
+  id           String              @id @default(uuid())
+  ticketNo     String              @unique
+  type         TicketType
+  status       String
+  priority     TicketPriority      @default(NORMAL)
+  subject      String
+  detail       String
+  quality      Boolean             @default(false)
+  environment  Boolean             @default(false)
+  safety       Boolean             @default(false)
+  assetId      String?
+  assetTag     String?
+  assetName    String?
+  assetLine    String?
+  requesterId  String
+  sectionId    String?
+  assigneeId   String?
+  discoveredAt DateTime
+  dueAt        DateTime?
+  startedAt    DateTime?
+  closedAt     DateTime?
+  acceptedAt   DateTime?
+  cause        String?
+  resolution   String?
+  rejectReason String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  asset        Asset?              @relation(fields: [assetId], references: [id])
+  requester    User                @relation("TicketRequester", fields: [requesterId], references: [id])
+  assignee     User?               @relation("TicketAssignee", fields: [assigneeId], references: [id])
+  section      Section?            @relation(fields: [sectionId], references: [id])
+  events       TicketEvent[]
+  attachments  TicketAttachment[]
+  comments     TicketComment[]
+
+  @@index([status, type])
+  @@index([requesterId])
+  @@index([assigneeId])
+  @@index([assetId])
+}
+
+model TicketEvent {
+  id         String   @id @default(uuid())
+  ticketId   String
+  actorId    String
+  fromStatus String?
+  toStatus   String
+  action     String
+  note       String?
+  createdAt  DateTime @default(now())
+  ticket     Ticket   @relation(fields: [ticketId], references: [id])
+  actor      User     @relation(fields: [actorId], references: [id])
+}
+
+model TicketAttachment {
+  id          String         @id @default(uuid())
+  ticketId    String
+  kind        AttachmentKind
+  storagePath String
+  contentType String
+  caption     String?
+  createdAt   DateTime       @default(now())
+  ticket      Ticket         @relation(fields: [ticketId], references: [id])
+}
+
+model TicketComment {
+  id        String   @id @default(uuid())
+  ticketId  String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  author    User     @relation(fields: [authorId], references: [id])
+}

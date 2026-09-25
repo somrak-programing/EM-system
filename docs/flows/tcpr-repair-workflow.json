@@ -1,0 +1,123 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "โฟลงานแจ้งซ่อม TCPR",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "happy-path",
+        "label": "ทางสำเร็จ",
+        "focus": ["login", "form", "create", "claim", "complete", "pending", "accept"],
+        "note": "เจ็ดขั้นจากล็อกอินถึงตรวจรับงาน"
+      },
+      {
+        "id": "tech-side",
+        "label": "ฝั่งช่าง",
+        "focus": ["create", "claim", "complete"],
+        "note": "ช่างเห็นเฉพาะใบงานที่ตรงประเภทของตัวเอง"
+      },
+      {
+        "id": "reject-loop",
+        "label": "วงปฏิเสธ",
+        "focus": ["pending", "claim", "accept"],
+        "note": "ปฏิเสธแล้วใบงานกลับไปเป็น IN_PROGRESS ที่ช่างคนเดิม"
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "requester", "label": "ผู้ร้องขอ" },
+    { "id": "tech", "label": "ช่าง EM / IT" },
+    { "id": "system", "label": "ระบบ TCPR" }
+  ],
+  "phases": [
+    { "id": "intake", "label": "แจ้งซ่อม", "fromCol": 0, "toCol": 2 },
+    { "id": "repair", "label": "ซ่อม", "fromCol": 3, "toCol": 4, "variant": "emphasis" },
+    { "id": "close", "label": "ปิดงาน", "fromCol": 5, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["login", "form", "create", "claim", "complete", "pending", "accept"],
+  "nodes": [
+    {
+      "id": "login",
+      "lane": "requester",
+      "col": 0,
+      "type": "security",
+      "label": "ล็อกอิน",
+      "sublabel": "คุกกี้ JWT 7 วัน",
+      "width": 150
+    },
+    {
+      "id": "form",
+      "lane": "requester",
+      "col": 1,
+      "type": "frontend",
+      "label": "กรอกใบแจ้งซ่อม",
+      "sublabel": "ประเภท + รายละเอียด",
+      "tag": "รูป 0–4",
+      "width": 150
+    },
+    {
+      "id": "accept",
+      "lane": "requester",
+      "col": 5,
+      "type": "backend",
+      "label": "ตรวจรับงาน",
+      "sublabel": "ACCEPTED",
+      "tag": "จบงาน",
+      "width": 150
+    },
+    {
+      "id": "claim",
+      "lane": "tech",
+      "col": 3,
+      "type": "frontend",
+      "label": "ช่างรับงาน",
+      "sublabel": "IN_PROGRESS",
+      "width": 150
+    },
+    {
+      "id": "complete",
+      "lane": "tech",
+      "col": 4,
+      "type": "frontend",
+      "label": "ส่งผลงาน",
+      "sublabel": "สาเหตุ + วิธีแก้",
+      "width": 150
+    },
+    {
+      "id": "create",
+      "lane": "system",
+      "col": 2,
+      "type": "backend",
+      "label": "ออกเลขใบงาน",
+      "sublabel": "QUEUED รอช่าง",
+      "width": 150
+    },
+    {
+      "id": "pending",
+      "lane": "system",
+      "col": 5,
+      "type": "database",
+      "label": "รอตรวจรับ",
+      "sublabel": "PENDING_ACCEPTANCE",
+      "width": 150
+    }
+  ],
+  "edges": [
+    { "id": "e1", "from": "login", "to": "form", "variant": "emphasis" },
+    { "id": "e2", "from": "form", "to": "create", "label": "ส่งใบงาน", "variant": "emphasis" },
+    { "id": "e3", "from": "create", "to": "claim", "label": "ช่างตามประเภทงาน", "variant": "emphasis" },
+    { "id": "e4", "from": "claim", "to": "complete", "variant": "emphasis" },
+    { "id": "e5", "from": "complete", "to": "pending", "variant": "emphasis" },
+    { "id": "e6", "from": "pending", "to": "accept", "label": "ตรวจผ่าน", "variant": "emphasis" },
+    {
+      "id": "e7",
+      "from": "pending",
+      "to": "claim",
+      "label": "ปฏิเสธ ต้องใส่เหตุผล",
+      "variant": "security",
+      "role": "error",
+      "route": "bottom-channel"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: tcpr
+      POSTGRES_PASSWORD: tcpr
+      POSTGRES_DB: tcpr_repair
+    ports:
+      - "5432:5432"
+    volumes:
+      - tcpr_pg:/var/lib/postgresql/data
+
+volumes:
+  tcpr_pg:

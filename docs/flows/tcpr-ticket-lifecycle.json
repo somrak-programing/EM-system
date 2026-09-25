@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "วงจรชีวิตใบงาน TCPR",
+    "quality_profile": "showcase",
+    "viewBox": [980, 566],
+    "views": [
+      {
+        "id": "main-rail",
+        "label": "รางหลัก",
+        "focus": ["queued", "in_progress", "pending", "accepted"],
+        "note": "สถานะที่เก็บใน Ticket.status ตาม seed default-flows.ts"
+      },
+      {
+        "id": "tech-work",
+        "label": "งานช่าง",
+        "focus": ["queued", "in_progress", "pending"],
+        "note": "CLAIM ตั้งผู้รับงาน COMPLETE กรอกสาเหตุและการแก้ไข"
+      },
+      {
+        "id": "reject-loop",
+        "label": "ส่งกลับช่าง",
+        "focus": ["pending", "rejected", "in_progress"],
+        "note": "REJECT ไม่สร้างสถานะใหม่ ใบงานกลับ IN_PROGRESS"
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "main", "label": "สถานะใบงาน" },
+    { "id": "exceptions", "label": "ส่งกลับ" }
+  ],
+  "states": [
+    {
+      "id": "queued",
+      "type": "start",
+      "label": "รอช่าง",
+      "sublabel": "QUEUED",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "isInitial"
+    },
+    {
+      "id": "in_progress",
+      "type": "active",
+      "label": "กำลังซ่อม",
+      "sublabel": "IN_PROGRESS",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "ASSIGNEE"
+    },
+    {
+      "id": "pending",
+      "type": "decision",
+      "label": "รอตรวจรับ",
+      "sublabel": "PENDING_ACCEPTANCE",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "REQUESTER"
+    },
+    {
+      "id": "accepted",
+      "type": "success",
+      "label": "ยอมรับแล้ว",
+      "sublabel": "ACCEPTED",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "tag": "isTerminal"
+    },
+    {
+      "id": "rejected",
+      "type": "failure",
+      "label": "ปฏิเสธ",
+      "sublabel": "กลับกำลังซ่อม",
+      "lane": "exceptions",
+      "col": 0,
+      "tag": "REJECT"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "reject-event",
+      "from": "pending",
+      "to": "rejected",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "straight"
+    },
+    {
+      "id": "reject-retry",
+      "from": "rejected",
+      "to": "in_progress",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "bottom"
+    }
+  ]
+}

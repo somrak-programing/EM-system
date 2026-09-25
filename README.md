@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TCPR Repair MVP
 
-## Getting Started
+แอปแจ้งซ่อม **TCPR** ตามสเปกใน `docs/specs/2026-09-10-repair-tickets.md`
 
-First, run the development server:
+**แสต็กที่ยืนยัน:** Next.js + PostgreSQL + Prisma (`docs/stack.md`)  
+เครื่องนี้ยังไม่มี Docker/Postgres ดังนั้น MVP รันบน **SQLite** ด้วยโมเดลเดียวกัน
+
+## รันบนเครื่องนี้
 
 ```bash
+cd apps/repair
+copy env.example .env
+npx prisma generate
+npx prisma db push
+npx tsx prisma/seed.ts
+npm test
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+เปิด http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| ผู้ใช้ | รหัสผ่าน | บทบาท |
+| --- | --- | --- |
+| requester | requester123 | ผู้ร้องขอ |
+| tech | tech123 | ช่าง EM |
+| admin | admin123 | Admin — แก้เส้นทางอนุมัติที่ `/admin/flows` |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+ลูปทดลอง: ล็อกอิน requester → แจ้งซ่อมเครื่องจักร → ล็อกอิน tech → คิวช่าง รับงาน → ปิดงาน → ล็อกอิน requester → ยอมรับ
 
-## Learn More
+แอดมินจัดขั้นและเส้นทาง (จาก → ถึง, ใครกดได้) จาก UI ได้ โดยไม่ต้องแก้โค้ด
 
-To learn more about Next.js, take a look at the following resources:
+## PostgreSQL (เมื่อมี Docker)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+docker compose up -d
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+แล้วตั้ง `DATABASE_URL="postgresql://tcpr:tcpr@localhost:5432/tcpr_repair"` และเปลี่ยน `provider` ใน `prisma/schema.prisma` เป็น `postgresql`

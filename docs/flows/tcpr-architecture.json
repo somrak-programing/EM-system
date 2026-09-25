@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "TCPR แผนผังระบบ",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "เส้นทางคำขอ",
+        "focus": ["staff", "pages", "actions", "prisma"],
+        "note": "ผู้ใช้ส่งฟอร์มผ่าน Server Action แล้ว Prisma บันทึกใบงาน"
+      },
+      {
+        "id": "identity",
+        "label": "ตัวตนและสิทธิ์",
+        "focus": ["staff", "middleware", "actions", "engine"],
+        "note": "คุกกี้ JWT ผ่าน middleware ก่อน แล้ว engine ตรวจบทบาทตอนเปลี่ยนสถานะ"
+      },
+      {
+        "id": "files-and-rules",
+        "label": "ไฟล์และกฎโฟล",
+        "focus": ["pages", "uploads", "engine", "admin"],
+        "note": "รูปเก็บนอก public และแอดมินแก้ Workflow ในฐานข้อมูลได้"
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 4,
+    "gapX": 56,
+    "gapY": 72,
+    "cellW": 150,
+    "cellH": 64
+  },
+  "components": [
+    {
+      "id": "staff",
+      "type": "external",
+      "label": "พนักงานโรงงาน",
+      "sublabel": "ผู้ร้องขอ / ช่าง / แอดมิน",
+      "row": 1,
+      "col": 0,
+      "tag": "เบราว์เซอร์"
+    },
+    {
+      "id": "middleware",
+      "type": "security",
+      "label": "middleware.ts",
+      "sublabel": "คุกกี้ tcpr_session",
+      "row": 0,
+      "col": 1,
+      "tag": "บังคับล็อกอิน"
+    },
+    {
+      "id": "pages",
+      "type": "frontend",
+      "label": "หน้า Next.js",
+      "sublabel": "/tickets /queue /admin",
+      "row": 1,
+      "col": 1
+    },
+    {
+      "id": "actions",
+      "type": "backend",
+      "label": "Server Actions",
+      "sublabel": "create + transition",
+      "row": 1,
+      "col": 2,
+      "tag": "multipart 25mb"
+    },
+    {
+      "id": "engine",
+      "type": "backend",
+      "label": "isTransitionAllowed",
+      "sublabel": "บทบาท + ActorScope",
+      "row": 0,
+      "col": 2,
+      "tag": "ADMIN ข้ามได้"
+    },
+    {
+      "id": "prisma",
+      "type": "database",
+      "label": "Prisma + SQLite",
+      "sublabel": "file:./dev.db",
+      "row": 1,
+      "col": 3
+    },
+    {
+      "id": "uploads",
+      "type": "database",
+      "label": "uploads/",
+      "sublabel": "tickets/<id>/<uuid>",
+      "row": 2,
+      "col": 2,
+      "tag": "นอก public"
+    },
+    {
+      "id": "admin",
+      "type": "frontend",
+      "label": "/admin/flows",
+      "sublabel": "แก้ stage / transition",
+      "row": 2,
+      "col": 3
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "apps/repair · Next.js 15",
+      "wraps": ["middleware", "pages", "actions", "engine", "admin"]
+    },
+    {
+      "kind": "security-group",
+      "label": "เซสชัน httpOnly JWT",
+      "wraps": ["middleware", "actions", "engine"]
+    }
+  ],
+  "connections": [
+    { "id": "staff-pages", "from": "staff", "to": "pages", "label": "เปิดหน้า", "variant": "emphasis" },
+    { "id": "mw-pages", "from": "middleware", "to": "pages", "label": "ตรวจคุกกี้", "variant": "security", "labelDy": 24 },
+    { "id": "pages-actions", "from": "pages", "to": "actions", "label": "POST form" },
+    { "id": "actions-engine", "from": "actions", "to": "engine", "label": "อนุญาตเปลี่ยนสถานะ?", "variant": "security" },
+    { "id": "actions-prisma", "from": "actions", "to": "prisma", "label": "บันทึกใบงาน" },
+    { "id": "actions-uploads", "from": "actions", "to": "uploads", "label": "บันทึกรูป", "labelDy": 24 },
+    { "id": "admin-prisma", "from": "admin", "to": "prisma", "label": "แก้กฎโฟล", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "ทางหลัก",
+      "items": [
+        "ทุกหน้าต้องมีคุกกี้ tcpr_session ยกเว้น /login",
+        "การสร้างและเลื่อนสถานะใบงานทำผ่าน Server Action ไม่มี REST API แยก"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "ข้อมูล",
+      "items": [
+        "สถานะใบงานเป็นรหัส stage ใน Workflow ของประเภทนั้น",
+        "รูปเก็บบนดิสก์แล้วเสิร์ฟผ่าน /api/attachments/[id] ที่ต้องล็อกอิน"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "สิทธิ์ที่ยังไม่ใช้",
+      "items": [
+        "มีบทบาท SECTION_MANAGER / EM_MANAGER / GM ในฐานข้อมูลแล้ว",
+        "โฟลค่าเริ่มต้นยังไม่เรียกบทบาทเหล่านั้น — ช่างรับงานได้ทันทีหลังสร้างใบ"
+      ]
+    }
+  ]
+}
