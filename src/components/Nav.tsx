@@ -48,9 +48,14 @@ export function Nav({ user }: { user: SessionUser }) {
             </Link>
           ) : null}
           {user.role === "ADMIN" ? (
-            <Link className="rounded-lg px-3 py-2 text-brand-navy transition hover:bg-brand-teal/10 hover:text-brand-teal-dark" href="/admin/flows">
-              เส้นทางอนุมัติ
-            </Link>
+            <>
+              <Link className="rounded-lg px-3 py-2 text-brand-navy transition hover:bg-brand-teal/10 hover:text-brand-teal-dark" href="/admin/users">
+                ผู้ใช้
+              </Link>
+              <Link className="rounded-lg px-3 py-2 text-brand-navy transition hover:bg-brand-teal/10 hover:text-brand-teal-dark" href="/admin/flows">
+                เส้นทางอนุมัติ
+              </Link>
+            </>
           ) : null}
           <span className="ml-1 rounded-full bg-brand-navy/5 px-3 py-1.5 text-xs text-brand-navy">
             {user.displayName} · {ROLE_LABEL[user.role]}

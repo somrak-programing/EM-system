@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { collectRequestPhotos, saveTicketPhotos } from "@/lib/attachments";
 import { clearSession, createSession, requireSession } from "@/lib/auth";
 import { loadRules, loadWorkflow } from "@/lib/flow";
-import { formatWhen } from "@/lib/format";
+import { formatWhen, parseImpactOther } from "@/lib/format";
 import { canManageTicketSchedule } from "@/lib/ops-access";
 import { parseDateTime, validateFutureDueAt } from "@/lib/sla";
 import { isTransitionAllowed, nextClosedAt } from "@/lib/workflow";
@@ -120,6 +120,7 @@ export async function createTicketAction(formData: FormData) {
       quality: formData.get("quality") === "on",
       environment: formData.get("environment") === "on",
       safety: formData.get("safety") === "on",
+      impactOther: parseImpactOther(String(formData.get("impactOther") ?? "")),
       assetId,
       assetTag,
       assetName,

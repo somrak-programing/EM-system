@@ -154,6 +154,7 @@ model Ticket {
   quality      Boolean             @default(false)
   environment  Boolean             @default(false)
   safety       Boolean             @default(false)
+  impactOther  String?
   assetId      String?
   assetTag     String?
   assetName    String?

@@ -61,7 +61,7 @@ export default async function LoginPage({
           <ul className="mt-6 space-y-1 text-xs text-slate-500">
             <li>ผู้ร้องขอ: requester / requester123</li>
             <li>ช่าง EM: tech / tech123</li>
-            <li>Admin: admin / admin123 (จัดการเส้นทางอนุมัติได้)</li>
+            <li>Admin: admin / admin123 (จัดการผู้ใช้และเส้นทางอนุมัติได้)</li>
           </ul>
         </div>
       </div>

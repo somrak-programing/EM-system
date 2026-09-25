@@ -6,7 +6,7 @@ import { TicketTiming } from "@/components/TicketTiming";
 import { TicketPhotos } from "@/components/TicketPhotos";
 import { TransitionForms } from "@/components/TransitionForms";
 import { requireSession } from "@/lib/auth";
-import { formatWhen } from "@/lib/format";
+import { formatImpact, formatWhen } from "@/lib/format";
 import { loadRules, loadWorkflow, stageKey, stageLookup } from "@/lib/flow";
 import { canManageTicketSchedule } from "@/lib/ops-access";
 import { prisma } from "@/lib/prisma";
@@ -121,16 +121,8 @@ export default async function TicketDetailPage({
                 </dd>
               </div>
               <div>
-                <dt className="text-slate-500">Q / E / S</dt>
-                <dd>
-                  {[
-                    ticket.quality ? "Quality" : null,
-                    ticket.environment ? "Environment" : null,
-                    ticket.safety ? "Safety" : null,
-                  ]
-                    .filter(Boolean)
-                    .join(", ") || "—"}
-                </dd>
+                <dt className="text-slate-500">ผลกระทบ</dt>
+                <dd>{formatImpact(ticket)}</dd>
               </div>
             </dl>
             <p className="mt-4 whitespace-pre-wrap text-sm">{ticket.detail}</p>

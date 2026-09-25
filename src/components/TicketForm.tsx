@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createTicketAction } from "@/app/actions";
 import { DateTimeField } from "@/components/DateTimeField";
+import { MAX_IMPACT_OTHER } from "@/lib/format";
 import { PRIORITY_LABEL } from "@/components/PriorityBadge";
 import { MAX_CAPTION_LENGTH, MAX_REQUEST_PHOTOS } from "@/lib/attachment-rules";
 import {
@@ -79,6 +80,10 @@ export function TicketForm({
     const transfer = new DataTransfer();
     next.forEach((item) => transfer.items.add(item.file));
     input.files = transfer.files;
+  }
+
+  function openPhotoPicker() {
+    photoInputRef.current?.click();
   }
 
   function onPhotosChange(list: FileList | null) {
@@ -203,16 +208,27 @@ export function TicketForm({
         />
       </label>
 
-      <fieldset className="flex flex-wrap gap-4 text-sm text-slate-700">
+      <fieldset className="space-y-2 text-sm text-slate-700">
         <legend className="mb-1 font-medium">ผลกระทบ</legend>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" name="quality" /> Quality
-        </label>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" name="environment" /> Environment
-        </label>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" name="safety" /> Safety
+        <div className="flex flex-wrap gap-4">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="quality" /> Quality
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="environment" /> Environment
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="safety" /> Safety
+          </label>
+        </div>
+        <label className="block font-medium text-slate-700">
+          อื่นๆ (กรณีไม่มีในตัวเลือก)
+          <input
+            name="impactOther"
+            maxLength={MAX_IMPACT_OTHER}
+            className="mt-1 w-full rounded border border-slate-300 px-3 py-2 font-normal"
+            placeholder="พิมพ์ผลกระทบเอง เช่น สายการผลิตหยุด หรือไม่มีผลกระทบ"
+          />
         </label>
       </fieldset>
 
@@ -226,7 +242,7 @@ export function TicketForm({
           name="photos"
           accept="image/jpeg,image/png,image/webp,image/gif"
           multiple
-          className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+          className="sr-only"
           onChange={(event) => onPhotosChange(event.target.files)}
         />
         <p className="mt-1 text-xs text-slate-500">
@@ -268,8 +284,21 @@ export function TicketForm({
           </ul>
         ) : (
           <p className="mt-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-6 text-center text-sm text-slate-500">
-            ยังไม่มีรูปพรีวิว — ส่งใบงานได้เลย หรือเลือกไฟล์เพื่อดูตัวอย่างก่อนส่ง
+            ยังไม่มีรูป — ส่งใบงานได้เลย หรือกดปุ่มด้านล่างเพื่อแนบรูป
           </p>
+        )}
+        {photos.length < MAX_REQUEST_PHOTOS ? (
+          <button
+            type="button"
+            onClick={openPhotoPicker}
+            className="mt-3 w-full rounded-lg border-2 border-dashed border-brand-navy/40 bg-slate-50 px-4 py-3 text-sm font-medium text-brand-navy transition hover:border-brand-navy hover:bg-white"
+          >
+            {photos.length === 0
+              ? "เลือกไฟล์รูป"
+              : `เพิ่มรูปอีก (เหลืออีก ${MAX_REQUEST_PHOTOS - photos.length} รูป)`}
+          </button>
+        ) : (
+          <p className="mt-3 text-center text-sm text-slate-500">ครบ {MAX_REQUEST_PHOTOS} รูปแล้ว</p>
         )}
       </div>
 

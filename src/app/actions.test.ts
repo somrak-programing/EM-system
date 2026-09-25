@@ -109,6 +109,26 @@ describe("createTicketAction SLA inputs", () => {
       }),
     );
   });
+
+  it("persists a typed impact when no QES option matches", async () => {
+    const formData = baseCreateForm();
+    formData.set("impactOther", "  สายการผลิตหยุด  ");
+
+    await expect(createTicketAction(formData)).rejects.toMatchObject({
+      url: "/tickets/ticket-1",
+    });
+
+    expect(mocks.prisma.ticket.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          quality: false,
+          environment: false,
+          safety: false,
+          impactOther: "สายการผลิตหยุด",
+        }),
+      }),
+    );
+  });
 });
 
 describe("applyTransitionAction due date ownership", () => {
